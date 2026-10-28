@@ -1,0 +1,72 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net48</TargetFramework>
+    <AssemblyName>BryansGoodies.Core</AssemblyName>
+    <RootNamespace>BryansGoodies</RootNamespace>
+    <LangVersion>latest</LangVersion>
+    <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
+    <!-- Mod version number: the only thing to change before sharing a new DLL.
+         Propagated to Main.Version (generated Version.g.cs), the DLL properties and Share\version.txt. -->
+    <ModVersion>1.1.0</ModVersion>
+    <ShareDir>$(MSBuildProjectDirectory)\dist</ShareDir>
+  </PropertyGroup>
+
+  <!-- Valheim folder: pass -p:Valheim="D:\...\Valheim" if the game is installed elsewhere. -->
+  <PropertyGroup Condition="'$(Valheim)' == ''">
+    <Valheim Condition="Exists('E:\Games\Steam\steamapps\common\Valheim\valheim.exe')">E:\Games\Steam\steamapps\common\Valheim</Valheim>
+    <Valheim Condition="'$(Valheim)' == ''">C:\Program Files (x86)\Steam\steamapps\common\Valheim</Valheim>
+  </PropertyGroup>
+
+  <PropertyGroup>
+    <Managed>$(Valheim)\valheim_Data\Managed</Managed>
+    <!-- MelonLoader installed standalone (MelonLoader\net35 folder) or via BepInEx (BepInEx.MelonLoader.Loader plugin). -->
+    <MelonDir Condition="'$(MelonDir)' == '' And Exists('$(Valheim)\MelonLoader\net35\MelonLoader.dll')">$(Valheim)\MelonLoader\net35</MelonDir>
+    <MelonDir Condition="'$(MelonDir)' == ''">$(Valheim)\BepInEx\plugins\BepInEx.MelonLoader.Loader</MelonDir>
+    <HarmonyDll Condition="Exists('$(MelonDir)\0Harmony.dll')">$(MelonDir)\0Harmony.dll</HarmonyDll>
+    <HarmonyDll Condition="'$(HarmonyDll)' == ''">$(Valheim)\BepInEx\core\0Harmony.dll</HarmonyDll>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.NETFramework.ReferenceAssemblies" Version="1.0.3" PrivateAssets="all" />
+    <Reference Include="MelonLoader"><HintPath>$(MelonDir)\MelonLoader.dll</HintPath><Private>false</Private></Reference>
+    <Reference Include="0Harmony"><HintPath>$(HarmonyDll)</HintPath><Private>false</Private></Reference>
+    <Reference Include="assembly_valheim"><HintPath>$(Managed)\assembly_valheim.dll</HintPath><Private>false</Private></Reference>
+    <Reference Include="UnityEngine.PhysicsModule"><HintPath>$(Managed)\UnityEngine.PhysicsModule.dll</HintPath><Private>false</Private></Reference>
+    <Reference Include="Splatform"><HintPath>$(Managed)\Splatform.dll</HintPath><Private>false</Private></Reference>
+    <Reference Include="assembly_utils"><HintPath>$(Managed)\assembly_utils.dll</HintPath><Private>false</Private></Reference>
+    <Reference Include="assembly_guiutils"><HintPath>$(Managed)\assembly_guiutils.dll</HintPath><Private>false</Private></Reference>
+    <Reference Include="UnityEngine.CoreModule"><HintPath>$(Managed)\UnityEngine.CoreModule.dll</HintPath><Private>false</Private></Reference>
+    <Reference Include="UnityEngine.IMGUIModule"><HintPath>$(Managed)\UnityEngine.IMGUIModule.dll</HintPath><Private>false</Private></Reference>
+    <Reference Include="UnityEngine.TextRenderingModule"><HintPath>$(Managed)\UnityEngine.TextRenderingModule.dll</HintPath><Private>false</Private></Reference>
+    <Reference Include="UnityEngine.UI"><HintPath>$(Managed)\UnityEngine.UI.dll</HintPath><Private>false</Private></Reference>
+    <Reference Include="Unity.TextMeshPro"><HintPath>$(Managed)\Unity.TextMeshPro.dll</HintPath><Private>false</Private></Reference>
+    <Reference Include="UnityEngine.UIModule"><HintPath>$(Managed)\UnityEngine.UIModule.dll</HintPath><Private>false</Private></Reference>
+  </ItemGroup>
+
+  <!-- The loader is a separate project (Loader folder): exclude it from this build. -->
+  <ItemGroup>
+    <Compile Remove="Loader\**" />
+    <None Remove="Loader\**" />
+    <Compile Include="$(IntermediateOutputPath)Version.g.cs" />
+  </ItemGroup>
+
+  <!-- Version.g.cs: Main.Version and the assembly version attributes, from ModVersion. -->
+  <Target Name="GenerateVersion" BeforeTargets="CoreCompile">
+    <ItemGroup>
+      <VersionLines Include="// Generated at build time from &lt;ModVersion&gt; in BryansGoodies.csproj. Do not edit." />
+      <VersionLines Include="[assembly: System.Reflection.AssemblyVersion(&quot;$(ModVersion)&quot;)]" />
+      <VersionLines Include="[assembly: System.Reflection.AssemblyFileVersion(&quot;$(ModVersion)&quot;)]" />
+      <VersionLines Include="[assembly: System.Reflection.AssemblyInformationalVersion(&quot;$(ModVersion)&quot;)]" />
+      <VersionLines Include="namespace BryansGoodies { public static partial class Main { public const string Version = &quot;$(ModVersion)&quot;%3B } }" />
+    </ItemGroup>
+    <WriteLinesToFile File="$(IntermediateOutputPath)Version.g.cs" Lines="@(VersionLines)" Overwrite="true" WriteOnlyWhenDifferent="true" />
+  </Target>
+
+  <!-- Deployment: the payload goes into UserData\BryansGoodies (never into Mods: the loader is what loads it),
+       for every MelonLoader install present, and into dist\ (published on GitHub by publish.cmd) along with version.txt. -->
+  <Target Name="Deploy" AfterTargets="Build">
+    <MakeDir Directories="$(ShareDir)" />
+    <Copy SourceFiles="$(TargetPath)" DestinationFolder="$(ShareDir)" />
+    <WriteLinesToFile File="$(ShareDir)\version.txt" Lines="$(ModVersion)" Overwrite="true" />
+  </Target>
+</Project>

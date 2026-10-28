@@ -1,0 +1,57 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net48</TargetFramework>
+    <AssemblyName>BryansGoodies</AssemblyName>
+    <RootNamespace>BryansGoodies.Loader</RootNamespace>
+    <LangVersion>latest</LangVersion>
+    <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
+    <!-- Loader version: bump it when the loader changes. It goes to Loader.Version (generated), the DLL properties
+         and dist\loader.txt; running loaders put the new file in place for their next launch. -->
+    <LoaderVersion>1.1.0</LoaderVersion>
+    <ShareDir>$(MSBuildProjectDirectory)\..\dist</ShareDir>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(Valheim)' == ''">
+    <Valheim Condition="Exists('E:\Games\Steam\steamapps\common\Valheim\valheim.exe')">E:\Games\Steam\steamapps\common\Valheim</Valheim>
+    <Valheim Condition="'$(Valheim)' == ''">C:\Program Files (x86)\Steam\steamapps\common\Valheim</Valheim>
+  </PropertyGroup>
+
+  <PropertyGroup>
+    <Managed>$(Valheim)\valheim_Data\Managed</Managed>
+    <!-- The loader uses MelonUtils.*Directory, present in MelonLoader 0.5 (MLLoader via BepInEx, what runs here)
+         and still present but marked obsolete in 0.7: compile against the MLLoader version when it exists. -->
+    <MelonDir Condition="'$(MelonDir)' == '' And Exists('$(Valheim)\BepInEx\plugins\BepInEx.MelonLoader.Loader\MelonLoader.dll')">$(Valheim)\BepInEx\plugins\BepInEx.MelonLoader.Loader</MelonDir>
+    <MelonDir Condition="'$(MelonDir)' == ''">$(Valheim)\MelonLoader\net35</MelonDir>
+    <HarmonyDll Condition="Exists('$(MelonDir)\0Harmony.dll')">$(MelonDir)\0Harmony.dll</HarmonyDll>
+    <HarmonyDll Condition="'$(HarmonyDll)' == ''">$(Valheim)\BepInEx\core\0Harmony.dll</HarmonyDll>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.NETFramework.ReferenceAssemblies" Version="1.0.3" PrivateAssets="all" />
+    <Reference Include="MelonLoader"><HintPath>$(MelonDir)\MelonLoader.dll</HintPath><Private>false</Private></Reference>
+    <Reference Include="assembly_valheim"><HintPath>$(Managed)\assembly_valheim.dll</HintPath><Private>false</Private></Reference>
+    <Reference Include="UnityEngine.CoreModule"><HintPath>$(Managed)\UnityEngine.CoreModule.dll</HintPath><Private>false</Private></Reference>
+    <Compile Include="$(IntermediateOutputPath)LoaderVersion.g.cs" />
+  </ItemGroup>
+
+  <!-- LoaderVersion.g.cs: Loader.Version and the assembly version attributes, from LoaderVersion. -->
+  <Target Name="GenerateLoaderVersion" BeforeTargets="CoreCompile">
+    <ItemGroup>
+      <LoaderVersionLines Include="// Generated at build time from &lt;LoaderVersion&gt; in BryansGoodies.Loader.csproj. Do not edit." />
+      <LoaderVersionLines Include="[assembly: System.Reflection.AssemblyVersion(&quot;$(LoaderVersion)&quot;)]" />
+      <LoaderVersionLines Include="[assembly: System.Reflection.AssemblyFileVersion(&quot;$(LoaderVersion)&quot;)]" />
+      <LoaderVersionLines Include="[assembly: System.Reflection.AssemblyInformationalVersion(&quot;$(LoaderVersion)&quot;)]" />
+      <LoaderVersionLines Include="namespace BryansGoodies.Loader { public partial class Loader { public const string Version = &quot;$(LoaderVersion)&quot;%3B } }" />
+    </ItemGroup>
+    <WriteLinesToFile File="$(IntermediateOutputPath)LoaderVersion.g.cs" Lines="@(LoaderVersionLines)" Overwrite="true" WriteOnlyWhenDifferent="true" />
+  </Target>
+
+  <!-- The loader goes to Mods (standalone MelonLoader and/or via BepInEx) and to dist\ (published on GitHub) with loader.txt. -->
+  <Target Name="Deploy" AfterTargets="Build">
+    <!-- Only the active MelonLoader install (MLLoader via BepInEx); the standalone MelonLoader folders at the game root are dead. -->
+    <Copy SourceFiles="$(TargetPath)" DestinationFolder="$(Valheim)\MLLoader\Mods" Condition="Exists('$(Valheim)\MLLoader\Mods')" ContinueOnError="true" />
+    <MakeDir Directories="$(ShareDir)" />
+    <Copy SourceFiles="$(TargetPath)" DestinationFolder="$(ShareDir)" />
+    <WriteLinesToFile File="$(ShareDir)\loader.txt" Lines="$(LoaderVersion)" Overwrite="true" />
+  </Target>
+</Project>
