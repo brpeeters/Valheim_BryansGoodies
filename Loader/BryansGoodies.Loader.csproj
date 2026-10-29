@@ -11,11 +11,6 @@
     <ShareDir>$(MSBuildProjectDirectory)\..\dist</ShareDir>
   </PropertyGroup>
 
-  <PropertyGroup Condition="'$(Valheim)' == ''">
-    <Valheim Condition="Exists('E:\Games\Steam\steamapps\common\Valheim\valheim.exe')">E:\Games\Steam\steamapps\common\Valheim</Valheim>
-    <Valheim Condition="'$(Valheim)' == ''">C:\Program Files (x86)\Steam\steamapps\common\Valheim</Valheim>
-  </PropertyGroup>
-
   <PropertyGroup>
     <Managed>$(Valheim)\valheim_Data\Managed</Managed>
     <!-- The loader uses MelonUtils.*Directory, present in MelonLoader 0.5 (MLLoader via BepInEx, what runs here)

@@ -34,6 +34,9 @@ namespace BryansGoodies
             PlayerColors.Init(Cat);
             QuickStack.Init(Cat);
             CraftFromContainers.Init(Cat);
+            CraftQuantity.Init(Cat);
+            CraftSearch.Init(Cat);
+            ChestNames.Init(Cat);
             Gifts.Init(Cat);
             Updater.Init();
             ClaudeBridge.Init(Cat);
@@ -58,6 +61,8 @@ namespace BryansGoodies
                 Take("containers", () => Containers.Import(h));
                 Take("quickstack", () => QuickStack.Import(h));
                 Take("crafting", () => CraftFromContainers.Import(h));
+                Take("craftqty", () => CraftQuantity.Import(h));
+                Take("craftsearch", () => CraftSearch.Import(h));
                 Take("menu", () => ConfigMenu.Import(h));
                 Take("colors", () => PlayerColors.Import(h));
                 Take("gifts", () => Gifts.Import(h));
@@ -86,6 +91,8 @@ namespace BryansGoodies
             Give("containers", () => Containers.Export(h));
             Give("quickstack", () => QuickStack.Export(h));
             Give("crafting", () => CraftFromContainers.Export(h));
+            Give("craftqty", () => CraftQuantity.Export(h));
+            Give("craftsearch", () => CraftSearch.Export(h));
             Give("menu", () => ConfigMenu.Export(h));
             Give("colors", () => PlayerColors.Export(h));
             Give("gifts", () => Gifts.Export(h));
@@ -107,7 +114,7 @@ namespace BryansGoodies
 
         public static void Update()
         {
-            bool typing = Console.IsVisible() || (Chat.instance != null && Chat.instance.HasFocus()) || TextInput.IsVisible();
+            bool typing = Console.IsVisible() || (Chat.instance != null && Chat.instance.HasFocus()) || TextInput.IsVisible() || UiField.Typing;
             if (!typing && !ConfigMenu.WaitingForKey)
             {
                 if (ZInput.GetKeyDown(MenuKey.Value, false)) ConfigMenu.Toggle();

@@ -8,6 +8,7 @@ git diff --cached --quiet && echo Nothing to publish: no changes. && exit /b 0
 git commit -m "v%VERSION%" || exit /b 1
 git push || exit /b 1
 rem Tell the running game (on a local feed) to announce the published version to the other players.
-for %%D in ("E:\Games\Steam\steamapps\common\Valheim\MLLoader\UserData\BryansGoodies" "E:\Games\Steam\steamapps\common\Valheim\UserData\BryansGoodies") do if exist %%~D type nul > "%%~D\announce"
+rem game\ is the junction to the Valheim folder made by the build.
+for %%D in ("game\MLLoader\UserData\BryansGoodies" "game\UserData\BryansGoodies") do if exist %%~D type nul > "%%~D\announce"
 echo.
 echo Published: v%VERSION%

@@ -1,0 +1,17 @@
+<Project>
+  <!-- Shared by BryansGoodies.csproj and Loader\BryansGoodies.Loader.csproj (MSBuild imports it automatically).
+       Valheim folder, first match wins: -p:Valheim="...", the VALHEIM_DIR environment variable,
+       the Steam install location of Valheim (app 892970, any Steam library), then the default Steam folder. -->
+  <PropertyGroup Condition="'$(Valheim)' == ''">
+    <Valheim>$(VALHEIM_DIR)</Valheim>
+    <Valheim Condition="'$(Valheim)' == ''">$([MSBuild]::GetRegistryValueFromView('HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\Steam App 892970', 'InstallLocation', null, RegistryView.Registry64, RegistryView.Registry32))</Valheim>
+    <Valheim Condition="'$(Valheim)' == ''">C:\Program Files (x86)\Steam\steamapps\common\Valheim</Valheim>
+  </PropertyGroup>
+
+  <PropertyGroup>
+    <Valheim>$(Valheim.TrimEnd('\'))</Valheim>
+    <RepoRoot>$(MSBuildThisFileDirectory)</RepoRoot>
+    <!-- game\ (junction to the Valheim folder, made by the build) and decomp\ (decompiled game code) are not mod sources. -->
+    <DefaultItemExcludes>$(DefaultItemExcludes);game\**;decomp\**</DefaultItemExcludes>
+  </PropertyGroup>
+</Project>

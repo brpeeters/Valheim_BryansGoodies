@@ -196,6 +196,7 @@ namespace BryansGoodies
             float now = Time.unscaledTime;
             if (now < nextOutboxPoll) return;
             nextOutboxPoll = now + 1f;
+            WriteOnline();
             if (!Directory.Exists(Outbox)) return;
             // Two kinds of files:
             //  - <request id>.txt : answer to a request (sent to its requester; the id stays valid 10 minutes, several files allowed);
@@ -227,6 +228,18 @@ namespace BryansGoodies
                 Send(ruid, rwho ?? Me(), script, id);
                 Main.Log.Msg($"Claude answer {id} sent.");
             }
+        }
+
+        // Host side: claude\online.txt lists the connected players, one name per line, rewritten when the set changes.
+        // The coordinator watches it to start (or wake) one agent per connected player.
+        static string lastOnline;
+        static void WriteOnline()
+        {
+            var names = new List<string>(Players().Keys); names.Sort(StringComparer.OrdinalIgnoreCase);
+            string text = string.Join("\n", names) + "\n";
+            if (text == lastOnline) return;
+            try { Directory.CreateDirectory(Dir); File.WriteAllText(Path.Combine(Dir, "online.txt"), text); lastOnline = text; }
+            catch (Exception e) { Main.Log.Warning("Claude online: " + e.Message); }
         }
 
         static string Me() => Player.m_localPlayer != null ? Player.m_localPlayer.GetPlayerName() : "?";
