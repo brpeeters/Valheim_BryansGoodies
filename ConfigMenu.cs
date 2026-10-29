@@ -76,6 +76,7 @@ namespace BryansGoodies
 
             Section("Death");
             Toggle(KeepItems.Enabled, "Keep the whole inventory on death (no tombstone)");
+            Toggle(NoSkillDrain.Enabled, "Keep skill levels on death (no skill drain)");
             if (Gifts.ShowInMenu)
             {
                 Section("Gifts");
@@ -91,7 +92,8 @@ namespace BryansGoodies
             KeyField("Favorite: hold + click", QuickStack.FavModifier);
             GUILayout.Label("<size=11><i>Favorites (golden star) are never stacked away, even with the chest button.</i></size>");
             Toggle(QuickStack.Debug, "Log quick stacking (log file)");
-            Toggle(ChestNames.Enabled, "Rename chests (Shift + E), the name shows on hover");
+            Toggle(ChestNames.Enabled, "Rename chests (hold key + E), the name shows on hover");
+            KeyField("Rename chest: hold + E", ChestNames.Modifier);
             Toggle(CraftFromContainers.Enabled, "Craft / build using the contents of nearby chests");
             Slider("Crafting radius", CraftFromContainers.Radius, 5f, 50f, "0", " m");
             GUILayout.Label("<size=11><i>A chest opened by another player is ignored. Ownership is only requested when opening the workbench, when clicking Craft and while building.</i></size>");

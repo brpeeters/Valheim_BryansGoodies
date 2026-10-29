@@ -324,11 +324,18 @@ namespace BryansGoodies
                 {
                     string comp = member.Substring(0, dot); member = member.Substring(dot + 1);
                     var list = new List<Component>();
-                    foreach (var c in go.GetComponentsInChildren<Component>(true)) if (c != null && c.GetType().Name.Equals(comp, StringComparison.OrdinalIgnoreCase)) list.Add(c);
+                    foreach (var c in go.GetComponentsInChildren<Component>(true)) if (c != null && IsA(c.GetType(), comp)) list.Add(c);
                     if (list.Count == 0) throw new Exception("no component " + comp);
                     return list;
                 }
                 return go.GetComponents<Component>();
+            }
+
+            // "Character" also finds a Humanoid: the type or one of its base types has that name.
+            static bool IsA(Type t, string name)
+            {
+                for (; t != null && t != typeof(Component); t = t.BaseType) if (t.Name.Equals(name, StringComparison.OrdinalIgnoreCase)) return true;
+                return false;
             }
 
             public static string Invoke(GameObject go, string member, string[] args)
@@ -371,6 +378,12 @@ namespace BryansGoodies
                 try
                 {
                     if (t == typeof(string)) { v = s; return true; }
+                    // "me" = the requesting player, for Player / Humanoid / Character / Component / GameObject parameters.
+                    if (s.Equals("me", StringComparison.OrdinalIgnoreCase) && Player.m_localPlayer != null)
+                    {
+                        if (t.IsAssignableFrom(typeof(Player))) { v = Player.m_localPlayer; return true; }
+                        if (t == typeof(GameObject)) { v = Player.m_localPlayer.gameObject; return true; }
+                    }
                     if (t == typeof(bool)) { v = s == "true" || s == "1" || s == "on"; return true; }
                     if (t == typeof(int)) { v = int.Parse(s, CultureInfo.InvariantCulture); return true; }
                     if (t == typeof(long)) { v = long.Parse(s, CultureInfo.InvariantCulture); return true; }

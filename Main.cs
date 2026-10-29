@@ -29,6 +29,7 @@ namespace BryansGoodies
             MenuKey = Prefs.Entry(Cat, "MenuKey", KeyCode.F7, "Configuration menu key");
 
             KeepItems.Init(Cat);
+            NoSkillDrain.Init(Cat);
             CallCommand.Init(Cat);
             Compass.Init(Cat);
             PlayerColors.Init(Cat);

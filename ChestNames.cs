@@ -4,13 +4,15 @@ using UnityEngine;
 
 namespace BryansGoodies
 {
-    // Named chests: Shift + E on a chest asks for a name (the game's sign input box). The name is stored in the
-    // chest's network data, so every player sees it, and replaces "Chest" in the hover text and the window title.
+    // Named chests: holding the rename key (Left Shift by default, F7 menu) + E on a chest asks for a name (the
+    // game's sign input box). The name is stored in the chest's network data, so every player sees it, and replaces
+    // "Chest" in the hover text and the window title.
     // An empty name brings back the game's name. Like a sign, writing the name makes us the chest's owner: refused
     // while another player has it open.
     public static class ChestNames
     {
         public static MelonPreferences_Entry<bool> Enabled;
+        public static MelonPreferences_Entry<KeyCode> Modifier;
 
         const string Key = "BG_ChestName";
         const int MaxLength = 32;
@@ -21,7 +23,8 @@ namespace BryansGoodies
 
         public static void Init(MelonPreferences_Category cat)
         {
-            Enabled = Prefs.Entry(cat, "ChestNames_Enabled", true, "Rename chests (Shift + E), the name replaces \"Chest\" on hover");
+            Enabled = Prefs.Entry(cat, "ChestNames_Enabled", true, "Rename chests (hold the rename key + E), the name replaces \"Chest\" on hover");
+            Modifier = Prefs.Entry(cat, "ChestNames_Modifier", KeyCode.LeftShift, "Key to hold + E on a chest to rename it");
         }
 
         // The chest's custom name, or null.
@@ -66,13 +69,13 @@ namespace BryansGoodies
             return true;
         }
 
-        // Shift + E: rename instead of opening.
+        // Rename key + E: rename instead of opening.
         [HarmonyPatch(typeof(Container), nameof(Container.Interact))]
         static class Interact_Patch
         {
             static bool Prefix(Container __instance, Humanoid character, bool hold, bool alt, ref bool __result)
             {
-                if (!alt || hold || !Applies(__instance) || character != Player.m_localPlayer || TextInput.instance == null) return true;
+                if (hold || !ZInput.GetKey(Modifier.Value, false) || !Applies(__instance) || character != Player.m_localPlayer || TextInput.instance == null) return true;
                 __result = true;
                 if (CanRename(__instance, character))
                     TextInput.instance.RequestText(new Receiver(__instance), "Chest name", MaxLength);
@@ -94,7 +97,7 @@ namespace BryansGoodies
                     if (__result.StartsWith(vanilla)) __result = name + __result.Substring(vanilla.Length);
                 }
                 if (__result.Contains("\n["))
-                    __result += Localization.instance.Localize("\n[<color=yellow><b>$KEY_AltPlace + $KEY_Use</b></color>] Rename");
+                    __result += Localization.instance.Localize($"\n[<color=yellow><b>{Modifier.Value} + $KEY_Use</b></color>] Rename");
             }
         }
 

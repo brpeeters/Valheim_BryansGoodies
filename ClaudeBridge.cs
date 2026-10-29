@@ -252,6 +252,11 @@ namespace BryansGoodies
             if (ZNet.instance != null)
                 foreach (var peer in ZNet.instance.GetPeers())
                     if (peer != null && !peer.m_server && !string.IsNullOrEmpty(peer.m_playerName)) d[peer.m_playerName] = peer.m_uid;
+            // On a dedicated server our only peer is the server: the other players come from the server's player list
+            // (routed RPCs reach them through the server, by their character's user id).
+            if (ZNet.instance != null)
+                foreach (var info in ZNet.instance.GetPlayerList())
+                    if (!string.IsNullOrEmpty(info.m_name) && !d.ContainsKey(info.m_name) && info.m_characterID.UserID != 0) d[info.m_name] = info.m_characterID.UserID;
             return d;
         }
 
@@ -312,7 +317,8 @@ namespace BryansGoodies
             var piece = prefab.GetComponent<Piece>();
             var item = prefab.GetComponent<ItemDrop>();
             string why = null;
-            if (piece != null)
+            // Some items also carry a Piece (feasts such as LoxPie, MeatPlatter): they are checked as items.
+            if (piece != null && item == null)
             {
                 if (!p.IsRecipeKnown(piece.m_name)) why = "piece not unlocked yet";
                 else foreach (var res in piece.m_resources)
