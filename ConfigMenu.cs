@@ -94,6 +94,7 @@ namespace BryansGoodies
             Toggle(QuickStack.Debug, "Log quick stacking (log file)");
             Toggle(ChestNames.Enabled, "Rename chests (hold key + E), the name shows on hover");
             KeyField("Rename chest: hold + E", ChestNames.Modifier);
+            Toggle(ChestSort.Enabled, "Sort button in the chest window");
             Toggle(CraftFromContainers.Enabled, "Craft / build using the contents of nearby chests");
             Slider("Crafting radius", CraftFromContainers.Radius, 5f, 50f, "0", " m");
             GUILayout.Label("<size=11><i>A chest opened by another player is ignored. Ownership is only requested when opening the workbench, when clicking Craft and while building.</i></size>");

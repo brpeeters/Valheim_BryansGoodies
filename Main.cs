@@ -38,6 +38,7 @@ namespace BryansGoodies
             CraftQuantity.Init(Cat);
             CraftSearch.Init(Cat);
             ChestNames.Init(Cat);
+            ChestSort.Init(Cat);
             Gifts.Init(Cat);
             Updater.Init();
             ClaudeBridge.Init(Cat);
@@ -93,6 +94,7 @@ namespace BryansGoodies
             Give("quickstack", () => QuickStack.Export(h));
             Give("crafting", () => CraftFromContainers.Export(h));
             Give("craftqty", () => CraftQuantity.Export(h));
+            Give("chestsort", () => ChestSort.Export(h));
             Give("craftsearch", () => CraftSearch.Export(h));
             Give("menu", () => ConfigMenu.Export(h));
             Give("colors", () => PlayerColors.Export(h));

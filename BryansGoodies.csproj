@@ -7,7 +7,7 @@
     <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
     <!-- Mod version number: the only thing to change before sharing a new DLL.
          Propagated to Main.Version (generated Version.g.cs), the DLL properties and Share\version.txt. -->
-    <ModVersion>1.2.1</ModVersion>
+    <ModVersion>1.2.2</ModVersion>
     <ShareDir>$(MSBuildProjectDirectory)\dist</ShareDir>
   </PropertyGroup>
 
