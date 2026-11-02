@@ -383,6 +383,15 @@ namespace BryansGoodies
             return false;
         }
 
+        // Lines whose selection may include other players' characters, or that push them around (shout).
+        static bool TakesPlayers(string cmd, string line)
+        {
+            if (cmd == "shout") return true;
+            if (cmd != "on" && cmd != "set" && cmd != "kill" && cmd != "heal" && cmd != "tame" && cmd != "push" && cmd != "remove") return false;
+            foreach (var w in line.ToLowerInvariant().Split(' ')) if (w == "players" || w == "all") return true;
+            return false;
+        }
+
         static string Filter(string script, string player)
         {
             var kept = new List<string>(); var refused = new List<string>();
@@ -392,7 +401,16 @@ namespace BryansGoodies
                 if (line.Length == 0 || line.StartsWith("#")) continue;
                 int sp = line.IndexOf(' ');
                 string cmd = (sp < 0 ? line : line.Substring(0, sp)).ToLowerInvariant();
-                if (Allowed(player, cmd)) kept.Add(line); else refused.Add(cmd);
+                if (!Allowed(player, cmd)) { refused.Add(cmd); continue; }
+                if (TakesPlayers(cmd, line) && !player.Equals(Me(), StringComparison.OrdinalIgnoreCase))
+                {
+                    // Older cores (friends not updated yet) claim ownership of whatever they act on, players included,
+                    // which leaves those players on a black screen until they reconnect (2026-11-02). Only the host runs the fix.
+                    kept.Add("say note pour Bryan : '" + cmd + "' sur des joueurs bloque (ecran noir)");
+                    Main.Log.Warning($"Claude policy: {player}: blocked (would take over players): {line}");
+                    continue;
+                }
+                kept.Add(line);
             }
             if (refused.Count > 0)
             {
@@ -544,7 +562,7 @@ namespace BryansGoodies
                     var fwd = p.transform.forward; fwd.y = 0f; fwd.Normalize();
                     foreach (var c in Character.GetAllCharacters())
                     {
-                        if (c == null || c == p) continue;
+                        if (c == null || c == p || c is Player) continue; // another player's character belongs to their client (taking it = black screen)
                         var d = c.transform.position - p.transform.position; d.y = 0f;
                         if (d.magnitude > radius || Vector3.Angle(fwd, d) > 45f) continue;
                         var nv = c.GetComponent<ZNetView>(); if (nv != null && nv.IsValid() && !nv.IsOwner()) nv.ClaimOwnership();

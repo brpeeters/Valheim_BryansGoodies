@@ -216,7 +216,9 @@ namespace BryansGoodies
         }
 
         static bool On(Player p, string field) { var f = AccessTools.Field(typeof(Player), field); return f != null && (bool)f.GetValue(p); }
-        static void Own(Thing t) { if (t.nv != null && t.nv.IsValid() && !t.nv.IsOwner()) t.nv.ClaimOwnership(); }
+        // Never claims a player: a character belongs to its own client, and taking it over leaves that player on a black
+        // screen until they reconnect (seen 2026-11-02 with "on players ...", a mere read).
+        static void Own(Thing t) { if (t.nv != null && t.nv.IsValid() && !t.nv.IsOwner() && t.go.GetComponent<Player>() == null) t.nv.ClaimOwnership(); }
 
         static void Act(Player p, string[] a, Action<string> report, string verb, Action<Thing> act)
         {
