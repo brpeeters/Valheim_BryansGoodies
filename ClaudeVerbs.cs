@@ -20,6 +20,7 @@ namespace BryansGoodies
     //   prefabs like <name part>   searches the game's prefab names (up to 60)
     //   info                       the requester: health, stamina, equipment, effects
     //   where                      the requester: position, biome, ground, time of day, weather
+    //   spawninfo <prefab part>    natural spawn rules of the world (biome, max, interval, chance, day/night, level, keys, weather)
 //   known [like <part>]        what the requester has unlocked: recipes (items, pieces) and discovered materials
     // Acting verbs on a selection (a category is required; "all" must be explicit):
     //   remove <selector> [drop]   pieces vanish without giving materials back (add "drop" to get them), the rest is destroyed
@@ -130,6 +131,7 @@ namespace BryansGoodies
                 case "known": Known(p, a, report); return true;
                 case "info": Info(p, report); return true;
                 case "where": Where(p, report); return true;
+                case "spawninfo": SpawnInfo(a, report); return true;
                 case "remove":
                 {
                     // Pieces never give their materials back (what Claude builds costs nothing), unless "drop" is given.
@@ -303,6 +305,51 @@ namespace BryansGoodies
             report("equipped: " + (eq.Count > 0 ? string.Join(", ", eq) : "nothing"));
             report("effects: " + (effects.Count > 0 ? string.Join(", ", effects) : "none"));
             report($"inventory: {inv.NrOfItems()} slot(s) used of {inv.GetWidth() * inv.GetHeight()}");
+        }
+
+        // The world's natural spawn rules (SpawnSystem lists, the same in every zone) for a prefab or spawner name part.
+        static readonly System.Reflection.FieldInfo SpawnInstances = AccessTools.Field(typeof(SpawnSystem), "m_instances");
+        static void SpawnInfo(string[] a, Action<string> report)
+        {
+            string like = a.Length > 0 ? (a[0] == "like" && a.Length > 1 ? a[1] : a[0]) : null;
+            if (string.IsNullOrEmpty(like)) throw new Exception("spawninfo <prefab part>");
+            var systems = SpawnInstances?.GetValue(null) as List<SpawnSystem>;
+            if (systems == null || systems.Count == 0) throw new Exception("no spawn system loaded");
+            var lines = new List<string>(); var seen = new HashSet<SpawnSystem.SpawnData>();
+            foreach (var list in systems[0].m_spawnLists)
+                foreach (var d in list.m_spawners)
+                {
+                    string prefab = d.m_prefab != null ? d.m_prefab.name : "?";
+                    if (!seen.Add(d) || (prefab.IndexOf(like, StringComparison.OrdinalIgnoreCase) < 0 && d.m_name.IndexOf(like, StringComparison.OrdinalIgnoreCase) < 0)) continue;
+                    lines.Add($"{prefab} \"{d.m_name}\"{(d.m_enabled ? "" : " (disabled)")}: biome {d.m_biome} area {d.m_biomeArea}, max {d.m_maxSpawned}, every {d.m_spawnInterval:0}s at {d.m_spawnChance:0}%, group {d.m_groupSizeMin}-{d.m_groupSizeMax}"
+                        + $", {(d.m_spawnAtDay && d.m_spawnAtNight ? "day+night" : d.m_spawnAtNight ? "night only" : "day only")}, level {d.m_minLevel}-{d.m_maxLevel}"
+                        + (d.m_requiredGlobalKey.Length > 0 ? ", needs key " + d.m_requiredGlobalKey : "")
+                        + (d.m_requiredEnvironments.Count > 0 ? ", weather " + string.Join("/", d.m_requiredEnvironments) : "")
+                        + (d.m_requiredPersistentEvent.Length > 0 ? ", event " + d.m_requiredPersistentEvent : "")
+                        + $", altitude {d.m_minAltitude:0}..{d.m_maxAltitude:0}" + (d.m_inForest && d.m_outsideForest ? "" : d.m_inForest ? ", forest only" : ", outside forest only")
+                        + (d.m_huntPlayer ? ", hunts player" : "") + (d.m_insidePlayerBase ? ", inside bases too" : ""));
+                    if (lines.Count >= 40) break;
+                }
+            // Placed spawners (camps, dungeons, nests): prefabs with a CreatureSpawner or a SpawnArea that name the creature.
+            bool Match(GameObject g) => g != null && g.name.IndexOf(like, StringComparison.OrdinalIgnoreCase) >= 0;
+            if (ZNetScene.instance != null)
+                foreach (var g in ZNetScene.instance.m_prefabs)
+                {
+                    if (g == null || lines.Count >= 60) continue;
+                    var cs = g.GetComponent<CreatureSpawner>();
+                    if (cs != null && (Match(g) || Match(cs.m_creaturePrefab)))
+                        lines.Add($"spawner {g.name} -> {(cs.m_creaturePrefab != null ? cs.m_creaturePrefab.name : "?")}: respawn {cs.m_respawnTimeMinuts:0} min, trigger {cs.m_triggerDistance:0} m, level {cs.m_minLevel}-{cs.m_maxLevel} (levelup {cs.m_levelupChance:0}%)"
+                            + $", {(cs.m_spawnAtDay && cs.m_spawnAtNight ? "day+night" : cs.m_spawnAtNight ? "night only" : "day only")}, group {cs.m_spawnGroupID} max {cs.m_maxGroupSpawned}"
+                            + (cs.m_requiredGlobalKey.Length > 0 ? ", needs key " + cs.m_requiredGlobalKey : "") + (cs.m_blockingGlobalKey.Length > 0 ? ", blocked by key " + cs.m_blockingGlobalKey : "")
+                            + (cs.m_spawnInPlayerBase ? ", inside bases too" : ""));
+                    var sa = g.GetComponent<SpawnArea>();
+                    if (sa != null && (Match(g) || sa.m_prefabs.Exists(d => Match(d.m_prefab))))
+                    {
+                        var mobs = new List<string>(); foreach (var d in sa.m_prefabs) mobs.Add((d.m_prefab != null ? d.m_prefab.name : "?") + " w" + d.m_weight.ToString("0.#", CultureInfo.InvariantCulture) + " lv" + d.m_minLevel + "-" + d.m_maxLevel);
+                        lines.Add($"spawn area {g.name}: every {sa.m_spawnIntervalSec:0}s, max {sa.m_maxNear} within {sa.m_nearRadius:0} m / {sa.m_maxTotal} within {sa.m_farRadius:0} m, trigger {sa.m_triggerDistance:0} m, levelup {sa.m_levelupChance:0}%: {string.Join(", ", mobs)}");
+                    }
+                }
+            report($"spawninfo {like}: {lines.Count} rule(s)\n" + string.Join("\n", lines));
         }
 
         static void Where(Player p, Action<string> report)

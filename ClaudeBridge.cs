@@ -350,7 +350,7 @@ namespace BryansGoodies
             ["say"] = "fun", ["center"] = "fun", ["chat"] = "fun", ["weather"] = "fun",
             ["spawn"] = "spawn", ["give"] = "give", ["place"] = "build", ["placerel"] = "build",
             ["tp"] = "give", ["call"] = "call", ["repair"] = "build", ["destroy"] = "build", ["shout"] = "spawn", ["scan"] = "fun", ["look"] = "fun", ["remove"] = "build", ["stand"] = "build", ["clearitems"] = "build", ["terrain"] = "build",
-            ["prefabs"] = "fun", ["known"] = "fun", ["info"] = "fun", ["where"] = "fun", ["kill"] = "spawn", ["heal"] = "give", ["tame"] = "spawn", ["push"] = "spawn",
+            ["prefabs"] = "fun", ["known"] = "fun", ["info"] = "fun", ["where"] = "fun", ["spawninfo"] = "fun", ["kill"] = "spawn", ["heal"] = "give", ["tame"] = "spawn", ["push"] = "spawn",
             ["fly"] = "give", ["god"] = "give", ["time"] = "fun", ["on"] = "call", ["set"] = "call",
         };
 

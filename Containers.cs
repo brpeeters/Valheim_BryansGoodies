@@ -40,6 +40,9 @@ namespace BryansGoodies
             if (ZNet.instance != null)
                 foreach (var peer in ZNet.instance.GetPeers())
                     if (peer != null && peer.m_uid == id) return (peer.m_server ? "server " : "player ") + peer.m_playerName + " (" + id + ")";
+            if (ZNet.instance != null)
+                foreach (var info in ZNet.instance.GetPlayerList())
+                    if (info.m_characterID.UserID == id) return "player " + info.m_name + " (" + id + ")";
             return "unknown or disconnected peer (" + id + ")";
         }
 
@@ -99,6 +102,11 @@ namespace BryansGoodies
             if (id == 0 || ZNet.instance == null) return false;
             foreach (var peer in ZNet.instance.GetPeers())
                 if (peer != null && peer.m_uid == id) return true;
+            // On a dedicated server our only peer is the server: the other players are in the server's player list.
+            // Missing this made every friend look disconnected, and their chests were taken from under them
+            // (an open chest taken over stays "in use" on their side until they reconnect; 2026-11-02).
+            foreach (var info in ZNet.instance.GetPlayerList())
+                if (info.m_characterID.UserID == id) return true;
             return false;
         }
 
