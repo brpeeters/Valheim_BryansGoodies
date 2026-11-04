@@ -97,6 +97,7 @@ namespace BryansGoodies
             Toggle(ChestSort.Enabled, "Sort button in the chest window");
             Toggle(CraftFromContainers.Enabled, "Craft / build using the contents of nearby chests");
             Slider("Crafting radius", CraftFromContainers.Radius, 5f, 50f, "0", " m");
+            Toggle(CraftFromContainers.ShowStock, "Show the stock next to each ingredient (5 / 23)");
             GUILayout.Label("<size=11><i>A chest opened by another player is ignored. Ownership is only requested when opening the workbench, when clicking Craft and while building.</i></size>");
 
             Section("Crafting");

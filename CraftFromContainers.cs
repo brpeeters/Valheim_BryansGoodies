@@ -22,6 +22,7 @@ namespace BryansGoodies
     {
         public static MelonPreferences_Entry<bool> Enabled;
         public static MelonPreferences_Entry<float> Radius;
+        public static MelonPreferences_Entry<bool> ShowStock;
 
         [System.ThreadStatic] static int scope;
         static bool strict, wasPlacing;
@@ -33,6 +34,7 @@ namespace BryansGoodies
         {
             Enabled = Prefs.Entry(cat, "Craft_Enabled", true, "Craft with the ingredients of nearby chests");
             Radius = Prefs.Entry(cat, "Craft_Radius", 20f, "Radius (m)");
+            ShowStock = Prefs.Entry(cat, "Craft_ShowStock", true, "Show the stock next to each required ingredient (carried + nearby chests)");
         }
 
         public static void Update()
@@ -154,6 +156,18 @@ namespace BryansGoodies
         static class SetupRequirement_Patch
         {
             static void Prefix() => Enter();
+
+            // Stock next to the required amount ("5 / 23"): what the player carries, plus the nearby chests when
+            // crafting from them is on (still inside our scope here, so CountItems includes them).
+            static void Postfix(Transform elementRoot, Piece.Requirement req, Player player, bool __result)
+            {
+                if (!__result || !ShowStock.Value || req?.m_resItem == null || player == null) return;
+                var amount = elementRoot.Find("res_amount")?.GetComponent<TMPro.TMP_Text>();
+                if (amount == null || !amount.gameObject.activeSelf) return;
+                int stock = player.GetInventory().CountItems(req.m_resItem.m_itemData.m_shared.m_name);
+                amount.text += " <size=75%><color=#c8c8c8>/ " + stock + "</color></size>";
+            }
+
             static void Finalizer() => Exit();
         }
 
